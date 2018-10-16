@@ -1,2 +1,2 @@
 # tedushop
-This is new project for training
+This is new project for angular 2
