@@ -3,20 +3,90 @@ namespace TeduShop.Data.Migrations
     using System;
     using System.Data.Entity.Migrations;
     
-    public partial class initial : DbMigration
+    public partial class UpdateNewDb : DbMigration
     {
         public override void Up()
         {
             CreateTable(
-                "dbo.AppRoles",
+                "dbo.Announcements",
+                c => new
+                    {
+                        ID = c.Int(nullable: false, identity: true),
+                        Title = c.String(nullable: false, maxLength: 250),
+                        Content = c.String(),
+                        CreatedDate = c.DateTime(nullable: false),
+                        UserId = c.String(maxLength: 128),
+                        Status = c.Boolean(nullable: false),
+                    })
+                .PrimaryKey(t => t.ID)
+                .ForeignKey("dbo.AppUsers", t => t.UserId)
+                .Index(t => t.UserId);
+            
+            CreateTable(
+                "dbo.AnnouncementUsers",
+                c => new
+                    {
+                        AnnouncementId = c.Int(nullable: false),
+                        UserId = c.String(nullable: false, maxLength: 128),
+                        HasRead = c.Boolean(nullable: false),
+                    })
+                .PrimaryKey(t => new { t.AnnouncementId, t.UserId })
+                .ForeignKey("dbo.Announcements", t => t.AnnouncementId, cascadeDelete: true)
+                .ForeignKey("dbo.AppUsers", t => t.UserId, cascadeDelete: true)
+                .Index(t => t.AnnouncementId)
+                .Index(t => t.UserId);
+            
+            CreateTable(
+                "dbo.AppUsers",
                 c => new
                     {
                         Id = c.String(nullable: false, maxLength: 128),
-                        Name = c.String(),
-                        Description = c.String(),
-                        Discriminator = c.String(nullable: false, maxLength: 128),
+                        FullName = c.String(maxLength: 256),
+                        Address = c.String(maxLength: 256),
+                        Avatar = c.String(),
+                        BirthDay = c.DateTime(),
+                        Status = c.Boolean(),
+                        Gender = c.Boolean(),
+                        Email = c.String(),
+                        EmailConfirmed = c.Boolean(nullable: false),
+                        PasswordHash = c.String(),
+                        SecurityStamp = c.String(),
+                        PhoneNumber = c.String(),
+                        PhoneNumberConfirmed = c.Boolean(nullable: false),
+                        TwoFactorEnabled = c.Boolean(nullable: false),
+                        LockoutEndDateUtc = c.DateTime(),
+                        LockoutEnabled = c.Boolean(nullable: false),
+                        AccessFailedCount = c.Int(nullable: false),
+                        UserName = c.String(),
                     })
                 .PrimaryKey(t => t.Id);
+            
+            CreateTable(
+                "dbo.AppUserClaims",
+                c => new
+                    {
+                        UserId = c.String(nullable: false, maxLength: 128),
+                        Id = c.Int(nullable: false),
+                        ClaimType = c.String(),
+                        ClaimValue = c.String(),
+                        AppUser_Id = c.String(maxLength: 128),
+                    })
+                .PrimaryKey(t => t.UserId)
+                .ForeignKey("dbo.AppUsers", t => t.AppUser_Id)
+                .Index(t => t.AppUser_Id);
+            
+            CreateTable(
+                "dbo.AppUserLogins",
+                c => new
+                    {
+                        UserId = c.String(nullable: false, maxLength: 128),
+                        LoginProvider = c.String(),
+                        ProviderKey = c.String(),
+                        AppUser_Id = c.String(maxLength: 128),
+                    })
+                .PrimaryKey(t => t.UserId)
+                .ForeignKey("dbo.AppUsers", t => t.AppUser_Id)
+                .Index(t => t.AppUser_Id);
             
             CreateTable(
                 "dbo.AppUserRoles",
@@ -32,6 +102,17 @@ namespace TeduShop.Data.Migrations
                 .ForeignKey("dbo.AppRoles", t => t.IdentityRole_Id)
                 .Index(t => t.AppUser_Id)
                 .Index(t => t.IdentityRole_Id);
+            
+            CreateTable(
+                "dbo.AppRoles",
+                c => new
+                    {
+                        Id = c.String(nullable: false, maxLength: 128),
+                        Name = c.String(),
+                        Description = c.String(),
+                        Discriminator = c.String(nullable: false, maxLength: 128),
+                    })
+                .PrimaryKey(t => t.Id);
             
             CreateTable(
                 "dbo.Colors",
@@ -117,12 +198,18 @@ namespace TeduShop.Data.Migrations
                         ProductID = c.Int(nullable: false),
                         Quantity = c.Int(nullable: false),
                         Price = c.Decimal(nullable: false, precision: 18, scale: 2),
+                        ColorId = c.Int(nullable: false),
+                        SizeId = c.Int(nullable: false),
                     })
                 .PrimaryKey(t => new { t.OrderID, t.ProductID })
+                .ForeignKey("dbo.Colors", t => t.ColorId, cascadeDelete: true)
                 .ForeignKey("dbo.Orders", t => t.OrderID, cascadeDelete: true)
                 .ForeignKey("dbo.Products", t => t.ProductID, cascadeDelete: true)
+                .ForeignKey("dbo.Sizes", t => t.SizeId, cascadeDelete: true)
                 .Index(t => t.OrderID)
-                .Index(t => t.ProductID);
+                .Index(t => t.ProductID)
+                .Index(t => t.ColorId)
+                .Index(t => t.SizeId);
             
             CreateTable(
                 "dbo.Orders",
@@ -144,58 +231,6 @@ namespace TeduShop.Data.Migrations
                 .PrimaryKey(t => t.ID)
                 .ForeignKey("dbo.AppUsers", t => t.CustomerId)
                 .Index(t => t.CustomerId);
-            
-            CreateTable(
-                "dbo.AppUsers",
-                c => new
-                    {
-                        Id = c.String(nullable: false, maxLength: 128),
-                        FullName = c.String(maxLength: 256),
-                        Address = c.String(maxLength: 256),
-                        Avatar = c.String(),
-                        BirthDay = c.DateTime(),
-                        Status = c.Boolean(),
-                        Gender = c.Boolean(),
-                        Email = c.String(),
-                        EmailConfirmed = c.Boolean(nullable: false),
-                        PasswordHash = c.String(),
-                        SecurityStamp = c.String(),
-                        PhoneNumber = c.String(),
-                        PhoneNumberConfirmed = c.Boolean(nullable: false),
-                        TwoFactorEnabled = c.Boolean(nullable: false),
-                        LockoutEndDateUtc = c.DateTime(),
-                        LockoutEnabled = c.Boolean(nullable: false),
-                        AccessFailedCount = c.Int(nullable: false),
-                        UserName = c.String(),
-                    })
-                .PrimaryKey(t => t.Id);
-            
-            CreateTable(
-                "dbo.AppUserClaims",
-                c => new
-                    {
-                        UserId = c.String(nullable: false, maxLength: 128),
-                        Id = c.Int(nullable: false),
-                        ClaimType = c.String(),
-                        ClaimValue = c.String(),
-                        AppUser_Id = c.String(maxLength: 128),
-                    })
-                .PrimaryKey(t => t.UserId)
-                .ForeignKey("dbo.AppUsers", t => t.AppUser_Id)
-                .Index(t => t.AppUser_Id);
-            
-            CreateTable(
-                "dbo.AppUserLogins",
-                c => new
-                    {
-                        UserId = c.String(nullable: false, maxLength: 128),
-                        LoginProvider = c.String(),
-                        ProviderKey = c.String(),
-                        AppUser_Id = c.String(maxLength: 128),
-                    })
-                .PrimaryKey(t => t.UserId)
-                .ForeignKey("dbo.AppUsers", t => t.AppUser_Id)
-                .Index(t => t.AppUser_Id);
             
             CreateTable(
                 "dbo.Products",
@@ -249,6 +284,38 @@ namespace TeduShop.Data.Migrations
                         MetaKeyword = c.String(maxLength: 256),
                         MetaDescription = c.String(maxLength: 256),
                         Status = c.Boolean(nullable: false),
+                    })
+                .PrimaryKey(t => t.ID);
+            
+            CreateTable(
+                "dbo.ProductTags",
+                c => new
+                    {
+                        ProductID = c.Int(nullable: false),
+                        TagID = c.String(nullable: false, maxLength: 50, unicode: false),
+                    })
+                .PrimaryKey(t => new { t.ProductID, t.TagID })
+                .ForeignKey("dbo.Products", t => t.ProductID, cascadeDelete: true)
+                .ForeignKey("dbo.Tags", t => t.TagID, cascadeDelete: true)
+                .Index(t => t.ProductID)
+                .Index(t => t.TagID);
+            
+            CreateTable(
+                "dbo.Tags",
+                c => new
+                    {
+                        ID = c.String(nullable: false, maxLength: 50, unicode: false),
+                        Name = c.String(nullable: false, maxLength: 50),
+                        Type = c.String(nullable: false, maxLength: 50),
+                    })
+                .PrimaryKey(t => t.ID);
+            
+            CreateTable(
+                "dbo.Sizes",
+                c => new
+                    {
+                        ID = c.Int(nullable: false, identity: true),
+                        Name = c.String(maxLength: 250),
                     })
                 .PrimaryKey(t => t.ID);
             
@@ -350,31 +417,6 @@ namespace TeduShop.Data.Migrations
                 .Index(t => t.TagID);
             
             CreateTable(
-                "dbo.Tags",
-                c => new
-                    {
-                        ID = c.String(nullable: false, maxLength: 50, unicode: false),
-                        Name = c.String(nullable: false, maxLength: 50),
-                        Type = c.String(nullable: false, maxLength: 50),
-                    })
-                .PrimaryKey(t => t.ID);
-            
-            CreateTable(
-                "dbo.ProductColors",
-                c => new
-                    {
-                        ID = c.Int(nullable: false, identity: true),
-                        ProductId = c.Int(nullable: false),
-                        ColorId = c.Int(nullable: false),
-                        Quantity = c.Int(nullable: false),
-                    })
-                .PrimaryKey(t => t.ID)
-                .ForeignKey("dbo.Colors", t => t.ColorId, cascadeDelete: true)
-                .ForeignKey("dbo.Products", t => t.ProductId, cascadeDelete: true)
-                .Index(t => t.ProductId)
-                .Index(t => t.ColorId);
-            
-            CreateTable(
                 "dbo.ProductImages",
                 c => new
                     {
@@ -388,41 +430,21 @@ namespace TeduShop.Data.Migrations
                 .Index(t => t.ProductId);
             
             CreateTable(
-                "dbo.ProductSizes",
+                "dbo.ProductQuantities",
                 c => new
                     {
-                        ID = c.Int(nullable: false, identity: true),
                         ProductId = c.Int(nullable: false),
                         SizeId = c.Int(nullable: false),
+                        ColorId = c.Int(nullable: false),
                         Quantity = c.Int(nullable: false),
                     })
-                .PrimaryKey(t => t.ID)
+                .PrimaryKey(t => new { t.ProductId, t.SizeId, t.ColorId })
+                .ForeignKey("dbo.Colors", t => t.ColorId, cascadeDelete: true)
                 .ForeignKey("dbo.Products", t => t.ProductId, cascadeDelete: true)
                 .ForeignKey("dbo.Sizes", t => t.SizeId, cascadeDelete: true)
                 .Index(t => t.ProductId)
-                .Index(t => t.SizeId);
-            
-            CreateTable(
-                "dbo.Sizes",
-                c => new
-                    {
-                        ID = c.Int(nullable: false, identity: true),
-                        Name = c.String(maxLength: 250),
-                    })
-                .PrimaryKey(t => t.ID);
-            
-            CreateTable(
-                "dbo.ProductTags",
-                c => new
-                    {
-                        ProductID = c.Int(nullable: false),
-                        TagID = c.String(nullable: false, maxLength: 50, unicode: false),
-                    })
-                .PrimaryKey(t => new { t.ProductID, t.TagID })
-                .ForeignKey("dbo.Products", t => t.ProductID, cascadeDelete: true)
-                .ForeignKey("dbo.Tags", t => t.TagID, cascadeDelete: true)
-                .Index(t => t.ProductID)
-                .Index(t => t.TagID);
+                .Index(t => t.SizeId)
+                .Index(t => t.ColorId);
             
             CreateTable(
                 "dbo.Slides",
@@ -482,67 +504,71 @@ namespace TeduShop.Data.Migrations
         public override void Down()
         {
             DropForeignKey("dbo.AppUserRoles", "IdentityRole_Id", "dbo.AppRoles");
-            DropForeignKey("dbo.ProductTags", "TagID", "dbo.Tags");
-            DropForeignKey("dbo.ProductTags", "ProductID", "dbo.Products");
-            DropForeignKey("dbo.ProductSizes", "SizeId", "dbo.Sizes");
-            DropForeignKey("dbo.ProductSizes", "ProductId", "dbo.Products");
+            DropForeignKey("dbo.ProductQuantities", "SizeId", "dbo.Sizes");
+            DropForeignKey("dbo.ProductQuantities", "ProductId", "dbo.Products");
+            DropForeignKey("dbo.ProductQuantities", "ColorId", "dbo.Colors");
             DropForeignKey("dbo.ProductImages", "ProductId", "dbo.Products");
-            DropForeignKey("dbo.ProductColors", "ProductId", "dbo.Products");
-            DropForeignKey("dbo.ProductColors", "ColorId", "dbo.Colors");
             DropForeignKey("dbo.PostTags", "TagID", "dbo.Tags");
             DropForeignKey("dbo.PostTags", "PostID", "dbo.Posts");
             DropForeignKey("dbo.Posts", "CategoryID", "dbo.PostCategories");
             DropForeignKey("dbo.Permissions", "FunctionId", "dbo.Functions");
             DropForeignKey("dbo.Permissions", "RoleId", "dbo.AppRoles");
+            DropForeignKey("dbo.OrderDetails", "SizeId", "dbo.Sizes");
             DropForeignKey("dbo.OrderDetails", "ProductID", "dbo.Products");
+            DropForeignKey("dbo.ProductTags", "TagID", "dbo.Tags");
+            DropForeignKey("dbo.ProductTags", "ProductID", "dbo.Products");
             DropForeignKey("dbo.Products", "CategoryID", "dbo.ProductCategories");
-            DropForeignKey("dbo.OrderDetails", "OrderID", "dbo.Orders");
             DropForeignKey("dbo.Orders", "CustomerId", "dbo.AppUsers");
+            DropForeignKey("dbo.OrderDetails", "OrderID", "dbo.Orders");
+            DropForeignKey("dbo.OrderDetails", "ColorId", "dbo.Colors");
+            DropForeignKey("dbo.Functions", "ParentId", "dbo.Functions");
+            DropForeignKey("dbo.Announcements", "UserId", "dbo.AppUsers");
+            DropForeignKey("dbo.AnnouncementUsers", "UserId", "dbo.AppUsers");
             DropForeignKey("dbo.AppUserRoles", "AppUser_Id", "dbo.AppUsers");
             DropForeignKey("dbo.AppUserLogins", "AppUser_Id", "dbo.AppUsers");
             DropForeignKey("dbo.AppUserClaims", "AppUser_Id", "dbo.AppUsers");
-            DropForeignKey("dbo.Functions", "ParentId", "dbo.Functions");
-            DropIndex("dbo.ProductTags", new[] { "TagID" });
-            DropIndex("dbo.ProductTags", new[] { "ProductID" });
-            DropIndex("dbo.ProductSizes", new[] { "SizeId" });
-            DropIndex("dbo.ProductSizes", new[] { "ProductId" });
+            DropForeignKey("dbo.AnnouncementUsers", "AnnouncementId", "dbo.Announcements");
+            DropIndex("dbo.ProductQuantities", new[] { "ColorId" });
+            DropIndex("dbo.ProductQuantities", new[] { "SizeId" });
+            DropIndex("dbo.ProductQuantities", new[] { "ProductId" });
             DropIndex("dbo.ProductImages", new[] { "ProductId" });
-            DropIndex("dbo.ProductColors", new[] { "ColorId" });
-            DropIndex("dbo.ProductColors", new[] { "ProductId" });
             DropIndex("dbo.PostTags", new[] { "TagID" });
             DropIndex("dbo.PostTags", new[] { "PostID" });
             DropIndex("dbo.Posts", new[] { "CategoryID" });
             DropIndex("dbo.Permissions", new[] { "FunctionId" });
             DropIndex("dbo.Permissions", new[] { "RoleId" });
+            DropIndex("dbo.ProductTags", new[] { "TagID" });
+            DropIndex("dbo.ProductTags", new[] { "ProductID" });
             DropIndex("dbo.Products", new[] { "CategoryID" });
-            DropIndex("dbo.AppUserLogins", new[] { "AppUser_Id" });
-            DropIndex("dbo.AppUserClaims", new[] { "AppUser_Id" });
             DropIndex("dbo.Orders", new[] { "CustomerId" });
+            DropIndex("dbo.OrderDetails", new[] { "SizeId" });
+            DropIndex("dbo.OrderDetails", new[] { "ColorId" });
             DropIndex("dbo.OrderDetails", new[] { "ProductID" });
             DropIndex("dbo.OrderDetails", new[] { "OrderID" });
             DropIndex("dbo.Functions", new[] { "ParentId" });
             DropIndex("dbo.AppUserRoles", new[] { "IdentityRole_Id" });
             DropIndex("dbo.AppUserRoles", new[] { "AppUser_Id" });
+            DropIndex("dbo.AppUserLogins", new[] { "AppUser_Id" });
+            DropIndex("dbo.AppUserClaims", new[] { "AppUser_Id" });
+            DropIndex("dbo.AnnouncementUsers", new[] { "UserId" });
+            DropIndex("dbo.AnnouncementUsers", new[] { "AnnouncementId" });
+            DropIndex("dbo.Announcements", new[] { "UserId" });
             DropTable("dbo.VisitorStatistics");
             DropTable("dbo.SystemConfigs");
             DropTable("dbo.SupportOnlines");
             DropTable("dbo.Slides");
-            DropTable("dbo.ProductTags");
-            DropTable("dbo.Sizes");
-            DropTable("dbo.ProductSizes");
+            DropTable("dbo.ProductQuantities");
             DropTable("dbo.ProductImages");
-            DropTable("dbo.ProductColors");
-            DropTable("dbo.Tags");
             DropTable("dbo.PostTags");
             DropTable("dbo.Posts");
             DropTable("dbo.PostCategories");
             DropTable("dbo.Permissions");
             DropTable("dbo.Pages");
+            DropTable("dbo.Sizes");
+            DropTable("dbo.Tags");
+            DropTable("dbo.ProductTags");
             DropTable("dbo.ProductCategories");
             DropTable("dbo.Products");
-            DropTable("dbo.AppUserLogins");
-            DropTable("dbo.AppUserClaims");
-            DropTable("dbo.AppUsers");
             DropTable("dbo.Orders");
             DropTable("dbo.OrderDetails");
             DropTable("dbo.Functions");
@@ -551,8 +577,13 @@ namespace TeduShop.Data.Migrations
             DropTable("dbo.Errors");
             DropTable("dbo.ContactDetails");
             DropTable("dbo.Colors");
-            DropTable("dbo.AppUserRoles");
             DropTable("dbo.AppRoles");
+            DropTable("dbo.AppUserRoles");
+            DropTable("dbo.AppUserLogins");
+            DropTable("dbo.AppUserClaims");
+            DropTable("dbo.AppUsers");
+            DropTable("dbo.AnnouncementUsers");
+            DropTable("dbo.Announcements");
         }
     }
 }
